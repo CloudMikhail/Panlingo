@@ -1,0 +1,72 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'CloudFormation template for Panlingo language learning application'
+
+Parameters:
+  EnvironmentName:
+    Type: String
+    Default: dev
+    AllowedValues: 
+      - dev
+      - test
+      - prod
+    Description: Environment name for the stack
+
+Resources:
+  PanlingoContentBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub 'panlingo-content-${EnvironmentName}'
+      AccessControl: Private
+      VersioningConfiguration:
+        Status: Enabled
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+
+  PanlingoUserTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub 'panlingo-users-${EnvironmentName}'
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: userId
+          AttributeType: S
+      KeySchema:
+        - AttributeName: userId
+          KeyType: HASH
+
+  PanlingoCourseProgressTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub 'panlingo-course-progress-${EnvironmentName}'
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: userId
+          AttributeType: S
+        - AttributeName: courseId
+          AttributeType: S
+      KeySchema:
+        - AttributeName: userId
+          KeyType: HASH
+        - AttributeName: courseId
+          KeyType: RANGE
+
+Outputs:
+  ContentBucketName:
+    Description: Name of the S3 bucket for Panlingo content
+    Value: !Ref PanlingoContentBucket
+    Export:
+      Name: !Sub '${AWS::StackName}-ContentBucketName'
+
+  UserTableName:
+    Description: Name of the DynamoDB table for Panlingo user data
+    Value: !Ref PanlingoUserTable
+    Export:
+      Name: !Sub '${AWS::StackName}-UserTableName'
+
+  CourseProgressTableName:
+    Description: Name of the DynamoDB table for Panlingo course progress
+    Value: !Ref PanlingoCourseProgressTable
+    Export:
+      Name: !Sub '${AWS::StackName}-CourseProgressTableName'
